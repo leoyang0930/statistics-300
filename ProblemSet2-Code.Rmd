@@ -1,0 +1,382 @@
+---
+title: "Logistic Regression Model based on Canadian GSS data"
+author: 
+  - Chengxuan Zhang
+  - Luluyang Yang
+  - Shuyan Dong
+  - Zishan Cheng
+date: "19-October-2020"
+bibliography: A2.bib
+fontsize: 12pt
+link-citations: yes
+linkcolor: blue
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+## Abstract
+
+**Background/introduction:** In this project, we are focusing on analyzing Canadian general social surveys ('GSS') on Family (cycle 31) as of year 2017. Data is obtained from the University of Toronto library. The purpose of this project is to build a statistic model to explain "Married Status" which is called *ever married* in our dataset.  
+**Methodology: ** Before building up a statistical model, we will dive into the cleaned 'GSS' dataset. The target variable (dependent variable) is binary, as a result, we are going to use the logistic regression model.  
+**Results and Conclusions: ** Finally, *ever married* has some relationship with current marriage status, living arrangement, education and etc. Most of people who ever got married may have the following common properties: living with spouse only; with good health conditions; having at least a high school diploma and less than $50,000 annual salary. 
+
+## Introduction
+
+'GSS' (Canadian general social survey) [@gss] program was established in 1985. 'GSS' collected data from telephone survey across ten different provinces. There are two main purposes from the 'GSS' program, the first one is to gather data on social trends in order to monitor changes in the living conditions and well-being of Canadian over time; the second one is to provide information on specific social policy issues of current or emerging interest. As a result, data collected by the 'GSS' program is one of the most official data source. It is worth to know Canadian social issues by analyzing the 'GSS' data.  
+
+As introduced in *Abstract*, the goal of the 'GSS' data analysis is to build a logistic regression model [@hosmer2013applied] in order to investigate the relationship between response variable (*ever married*) and other selected interesting predictors. Again, *ever married* is a discrete variable with only two factors, logistic regression model is one of the most appropriate statistical model in this study. 
+
+We will divide our analysis into several parts:  
+
+  * Data Descriptions, we download such data of year 2017, cycle 31th from the University of Toronto library. In the raw data set, there are 461 different variables. After some manipulations (details are in *Appendix*), we got 81 different variables. In addition, the data format is much tidier. In this section, we will do some data analysis based on cleaned 'GSS' dataset. At the same time, we will also point out some features and potential drawbacks of such dataset.  
+  * Model Descriptions: After analyzing key features and drawbacks of the 'GSS' dataset, we will build up a logistic regression model to investigate our variable of interest: *ever married*. We will introduce logistic regression model concept as well as some other model discussion.  
+  * Project Discussion: Finally, we will do a conclusion about what we found in this project. Within the final discussion part, we will have another two small sections.   
+    * Weakness, in either data analyze or model build up, some limitations may exist. We will discuss that in this part.  
+    * Next Steps: After identifying weakness of this project, we will propose a way to solve those limitations.
+
+## Data
+
+```{r,eval = TRUE, echo=FALSE, warning=FALSE, message=FALSE}
+library(tidyverse)
+
+GSS <- read.csv('gss.csv', header = TRUE)
+GSS$ever_married <- ifelse(GSS$ever_married=='Yes', 'Yes', 'No')
+```
+
+After checking the 'GSS' dataset, we found that 'GSS' data on 2017 have lots of information. It included almost all perspectives of surveyed families. From that, we can conclude that 'GSS' data is very comprehensive.  
+On the other hand, we also found that there are lots of missing values that means, even though survey designer designed lots of attributes in the survey, response is not fully collected for some reasons. This is the greatest drawback of the data. Hence, we decided to select few attributes with the least missing values for data analyzing and modeling purpose. That may make our model less accurate, because we may miss some important attributes due to missing information [@Sampling].  
+
+In this project, we are focusing on the relationship between response variable: *ever married* and other selected predictors: 'marital_status', 'education', 'living_arrangement', 'self_rated_health', 'income_respondent'. In this section, we will do some data analysis for these six variables. For our target variable: *ever married*, there are four missing value records that we are going to ignore or reclassify them (e.g. there are few response 'Don't know' and we will classify it into never married category as default). The plot and summarize can be found in **Results Section**.  
+
+
+## Model
+
+In this section, we will introduce logistic regression model to investigate the relationship between probability of ever getting married and other five predictors. General logistic regression model under logit function is described as follows:  
+$$log(\frac{p}{1-p})=\beta_0+\beta_1X_1+\beta_2X_2+...+\beta_kX_k$$  
+Where $\beta_i$ are the coefficients of logistic regression model, that means with one unit increases (decreases) of $X_i$, log odds will increase (decrease) by $\beta_i$. Equivalently, with one unit increases (decreases) of $X_i$, the probability will increase (decrease) by:
+$$\frac{exp(p)}{1+exp(p)}$$ ("Sigmoid function" [@han1995influence]).  
+
+For logistic regression model, the "Sigmoid function" can be better explained by the Figure 0.
+
+```{r,eval = TRUE, echo=FALSE, warning=FALSE, figure.width = 5, fig.height = 4}
+p <- ggplot(data = data.frame(x = c(-6, 6)), aes(x))
+p + stat_function(fun = function(x) exp(x)/(1+exp(x)), n = 100) + geom_hline(yintercept=1,linetype="dashed", color = "red") + 
+  geom_hline(yintercept=0,linetype="dashed", color = "red")+
+  labs(x = "Predictor",
+       y = "Response probability",
+       title = "Sigmoid plot for general logistic regression model") + 
+  theme_bw() + 
+  labs(caption = "Figure 0")
+```
+
+In our model, all our predictors are discrete variables, and we don't consider the interaction terms in our logistic regression model. Our specific model is shown as follows:
+
+\[
+  \begin{array}{lcl}  
+  log(\frac{p}{1-p}) &=& \beta_0+\beta_1X_{\text{marital.status}}+ \beta_2X_{\text{education}}
+    \\&&\\
+    && \beta_3X_{\text{living.arrangement}}+\beta_4X_{\text{self.rated.health}}
++ 
+    \\&&\\
+    &&\beta_5X_{\text{income.respondent}}
+  \end{array} 
+\]
+ 
+where $p$ is the probability of ever getting married.  
+In our logistic regression model, we assume that it is fitted and meeting all assumptions, that means we can use estimated coefficients to tell the relationship between response variable and predictors. Model users should be aware that model is not validated end to end (e.g. model assumptions, model prediction ability and etc.)  
+
+
+## Results
+
+In this section, we are going to present data analysis results, as well as logistic regression model results and parameter explanations.  
+
+```{r,eval = TRUE, echo=FALSE, warning=FALSE, message=FALSE,fig.width=50, fig.height=40}
+library(gridExtra)
+library(survey)
+
+My_Theme <- theme(
+  axis.title = element_text(size = 50),
+  plot.title = element_text(size = 70),
+  plot.caption = element_text(size = 40),
+  axis.text.y = element_text(size = 40),
+  plot.margin = grid::unit(rep(3, 4), "cm"))
+
+ever_married <- GSS %>% 
+ggplot(aes(x=ever_married)) +
+  geom_bar() + labs(x = "ever_married",
+       y = "Count",
+       title = "Bar plot of ever_married",
+       caption = "Figure1, Source: GSS data as of 2017 (Cycle 31)") +
+  theme_bw() + My_Theme
+
+marital_status <- GSS %>% 
+ggplot(aes(x=marital_status)) +
+  geom_bar() + labs(x = "marital_status",
+       y = "Count",
+       title = "Bar plot of marital_status",
+       caption = "Figure2, Source: GSS data as of 2017 (Cycle 31)") +
+  theme_bw() + My_Theme
+
+education <- GSS %>% 
+ggplot(aes(x=education)) +
+  geom_bar() + labs(x = "education",
+       y = "Count",
+       title = "Bar plot of education",
+       caption = "Figure3, Source: GSS data as of 2017 (Cycle 31)") +
+  theme_bw() + My_Theme
+
+living_arrangement <- GSS %>% 
+ggplot(aes(x=living_arrangement)) +
+  geom_bar() + labs(x = "living_arrangement",
+       y = "Count",
+       title = "Bar plot of living_arrangement",
+       caption = "Figure4, Source: GSS data as of 2017 (Cycle 31)") +
+  theme_bw() + My_Theme
+
+self_rated_health <- GSS %>% 
+ggplot(aes(x=self_rated_health)) +
+  geom_bar() + labs(x = "self_rated_health",
+       y = "Count",
+       title = "Bar plot of self_rated_health",
+       caption = "Figure5, Source: GSS data as of 2017 (Cycle 31)") +
+  theme_bw() + My_Theme
+
+income_respondent <- GSS %>% 
+ggplot(aes(x=income_respondent)) +
+  geom_bar() + labs(x = "income_respondent",
+       y = "Count",
+       title = "Bar plot of income_respondent",
+       caption = "Figure6, Source: GSS data as of 2017 (Cycle 31)") +
+  theme_bw() + My_Theme
+
+grid.arrange(ever_married,marital_status,
+             education, 
+             living_arrangement, 
+             self_rated_health, 
+             income_respondent)
+```
+
+
+In the above bar plots,  we can have a summarize of our target variables (including response variable and predictors) in the 'GSS' dataset:
+
+* From Figure 1, there are about 14000 people ever get married and 6000 people never married in the 'GSS' dataset.
+
+* From Figure 2, most of people (9500) in the 'GSS' survey are married (About 9000 people are in married status)
+
+* From Figure 3, most of people (about 5000) have 'High school diploma or a high school equivalency certificate'
+
+* From Figure 4, most of people (about 6000) are living with spouse only
+
+* From Figure 5, most of people (about 7000) have very good health condition
+
+* From Figure 6, most of people (about 7000) have annual income less than $25,000.  
+
+In the summary table (shown in *Appendix*), we can conclude that most of people ever married are in very good health; with at least a high school diploma; living with spouse only and having less than $50,000 annual income.  
+
+```{r,eval = TRUE, echo = FALSE, warning=FALSE, message=FALSE,fig.width=15, fig.height=10}
+# Summary table
+GSS$ever_married_num <- ifelse(GSS$ever_married=='Yes', 1, 0)
+```
+
+In the next step, we use `svyglm` function [@survey] to fit a logistic regression model and check summary of model.  
+
+```{r,eval = TRUE, echo=FALSE, warning=FALSE}
+N =6000
+n = length(GSS$ever_married)
+## Using the Survey Library
+fpc.srs = rep(N, n)
+
+GSS_Model <- GSS[,(names(GSS) %in% c("ever_married_num","marital_status","education",
+                                     "living_arrangement","self_rated_health","income_respondent"))]
+
+ucla.design <- svydesign(id=~1, data=GSS_Model)
+
+marriedglm <- svyglm(ever_married_num ~ marital_status + education + living_arrangement + self_rated_health +
+                     income_respondent,
+                   ucla.design, family="binomial")
+
+knitr::kable(data.frame(coef(marriedglm)), format="latex")
+```
+
+From model coefficient summary above, we can get final logistic regression model with estimated coefficients as follows:
+
+$$log(\frac{p}{1-p})=36.7-36.4X_{Commom\_law}+...-0.3X_{Income\_less\_than\_25\,000}$$  
+
+There are many estimated parameters from model summary, let's pick up two obvious ones to explain. 
+
+* $\beta_{Commom\_law}=-36.7$ means log odds of ever married is -36.7 (probability of ever married is almost zero) for people who are in common law
+
+* $\beta_{Income\_less\_than\_25\,000}=-0.3$ indicates that log odds of ever married is -0.3 (probability of ever married is about 42%) for people whose annual income less than $25,000. 
+
+## Discussion
+
+In this section, we will discuss the data analysis process and modeling the results we got.
+
+From the data analysis, we can conclude that people who ever got married have following common properties: **living with spouse only**; **having good health conditions**; **having at least high school diploma** and **having annual salary less than $50,000**. 
+
+From logistic regression model analysis, we can conclude that:
+
+* people living in common-law have less probability (almost zero) ever getting married
+
+* people with high school diploma have higher probability (75%) ever getting married
+
+* people with less than high school diploma also have higher probability (74%) ever getting married, which is contradicting with our data analysis
+
+* people who are living with spouse only have higher probability (66%) ever getting married. 
+
+### Weaknesses
+
+Weaknesses of Data and Study: as we talked before, there are lots of missing values for some responses due to some reasons, for example, some questions are related to people's privacy is hard to be collected such as the first marriage age, age start relationship and etc. Some of these variables may have significant impact to our goal. Next, the survey is collected through the phone, which is a very traditional way. Because some people may abandon the landline and use the more advanced internet connections.  Also, in the analysis, we only check the sum of people instead of the proportion in each category, which makes our data observations have some contradictions with regression analysis.
+
+Weaknesses of Regression Model: in our logistic regression model, we are assuming that all selected predictors are significant to the response variable (*ever married*). However, from the p-value in regression summary, we can find that not all predictors are significant at 5% significant level (e.g. income and health). Also, model validation processes are not executed, which mean our regression model is not very trustworthy.  
+
+### Next Steps
+
+After presenting weaknesses of whole analysis, we also propose some solutions on how to solve these weaknesses in order to make our analysis more reliable.
+
+Next steps of Data and Study: designer should propose a follow up survey and use advantages of internet to collect more answer of 'GSS' survey. Also, we are proposing to do more data analysis, for example, pie chart analysis.  
+
+Next steps of Regression Model: In order to make our regression model more accurate, we want to do a deep dive on our logistic regression model. That includes model assumptions check, model accuracy check (cross validation)  
+
+## Appendix
+
+### Data Transformation
+
+Given in `gss_cleaning.R`
+
+### Summary Table
+
+```{r,eval = TRUE, warning=FALSE, message=FALSE,fig.width=15, fig.height=10}
+# Summary table
+GSS$ever_married_num <- ifelse(GSS$ever_married=='Yes', 1, 0)
+marital_status_summary <- GSS %>% group_by(marital_status) %>% 
+  summarise(Freq=n(), Number_of_ever_married =sum(ever_married_num)) %>%
+  arrange(desc(Number_of_ever_married))
+
+education_summary <- GSS %>% group_by(education) %>% 
+  summarise(Freq=n(), Number_of_ever_married =sum(ever_married_num)) %>%
+  arrange(desc(Number_of_ever_married))
+
+living_arrangement_summary <- GSS %>% group_by(living_arrangement) %>% 
+  summarise(Freq=n(), Number_of_ever_married =sum(ever_married_num)) %>%
+  arrange(desc(Number_of_ever_married))
+
+self_rated_health_summary <- GSS %>% group_by(self_rated_health) %>% 
+  summarise(Freq=n(), Number_of_ever_married =sum(ever_married_num)) %>%
+  arrange(desc(Number_of_ever_married))
+
+income_respondent_summary <- GSS %>% group_by(income_respondent) %>% 
+  summarise(Freq=n(), Number_of_ever_married =sum(ever_married_num)) %>%
+  arrange(desc(Number_of_ever_married))
+
+grid.arrange(tableGrob(marital_status_summary), tableGrob(self_rated_health_summary),
+             tableGrob(education_summary),tableGrob(living_arrangement_summary),
+             tableGrob(income_respondent_summary))
+```
+
+### Analysis
+
+```{r, eval = FALSE, echo = TRUE}
+library(tidyverse)
+
+GSS <- read.csv('gss.csv', header = TRUE)
+GSS$ever_married <- ifelse(GSS$ever_married=='Yes', 'Yes', 'No')
+p <- ggplot(data = data.frame(x = c(-6, 6)), aes(x))
+p + stat_function(fun = function(x) exp(x)/(1+exp(x)), n = 100) + geom_hline(yintercept=1,linetype="dashed", color = "red") + 
+  geom_hline(yintercept=0,linetype="dashed", color = "red")+
+  labs(x = "Predictor",
+       y = "Response probability",
+       title = "Sigmoid plot for general logistic regression model") + 
+  theme_bw() + 
+  labs(caption = "Figure 0")
+
+library(gridExtra)
+library(survey)
+
+My_Theme <- theme(
+  axis.title = element_text(size = 50),
+  plot.title = element_text(size = 70),
+  plot.caption = element_text(size = 40),
+  axis.text.y = element_text(size = 40),
+  plot.margin = grid::unit(rep(3, 4), "cm"))
+
+ever_married <- GSS %>% 
+ggplot(aes(x=ever_married)) +
+  geom_bar() + labs(x = "ever_married",
+       y = "Count",
+       title = "Bar plot of ever_married",
+       caption = "Figure1, Source: GSS data as of 2017 (Cycle 31)") +
+  theme_bw() + My_Theme
+
+marital_status <- GSS %>% 
+ggplot(aes(x=marital_status)) +
+  geom_bar() + labs(x = "marital_status",
+       y = "Count",
+       title = "Bar plot of marital_status",
+       caption = "Figure2, Source: GSS data as of 2017 (Cycle 31)") +
+  theme_bw() + My_Theme
+
+education <- GSS %>% 
+ggplot(aes(x=education)) +
+  geom_bar() + labs(x = "education",
+       y = "Count",
+       title = "Bar plot of education",
+       caption = "Figure3, Source: GSS data as of 2017 (Cycle 31)") +
+  theme_bw() + My_Theme
+
+living_arrangement <- GSS %>% 
+ggplot(aes(x=living_arrangement)) +
+  geom_bar() + labs(x = "living_arrangement",
+       y = "Count",
+       title = "Bar plot of living_arrangement",
+       caption = "Figure4, Source: GSS data as of 2017 (Cycle 31)") +
+  theme_bw() + My_Theme
+
+self_rated_health <- GSS %>% 
+ggplot(aes(x=self_rated_health)) +
+  geom_bar() + labs(x = "self_rated_health",
+       y = "Count",
+       title = "Bar plot of self_rated_health",
+       caption = "Figure5, Source: GSS data as of 2017 (Cycle 31)") +
+  theme_bw() + My_Theme
+
+income_respondent <- GSS %>% 
+ggplot(aes(x=income_respondent)) +
+  geom_bar() + labs(x = "income_respondent",
+       y = "Count",
+       title = "Bar plot of income_respondent",
+       caption = "Figure6, Source: GSS data as of 2017 (Cycle 31)") +
+  theme_bw() + My_Theme
+
+grid.arrange(ever_married,marital_status,
+             education, 
+             living_arrangement, 
+             self_rated_health, 
+             income_respondent)
+N =6000
+n = length(GSS$ever_married)
+## Using the Survey Library
+fpc.srs = rep(N, n)
+
+GSS_Model <- GSS[,(names(GSS) %in% c("ever_married_num","marital_status","education",
+                                     "living_arrangement","self_rated_health","income_respondent"))]
+
+ucla.design <- svydesign(id=~1, data=GSS_Model)
+
+marriedglm <- svyglm(ever_married_num ~ marital_status + education + living_arrangement + self_rated_health +
+                     income_respondent,
+                   ucla.design, family="binomial")
+
+knitr::kable(data.frame(coef(marriedglm)), format="latex")
+```
+
+## References
+
+
+
+
+
